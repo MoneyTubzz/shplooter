@@ -1,0 +1,17 @@
+body {
+  margin: 0;
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(circle at center, #0b0b0b 0%, #050505 100%);
+  font-family: monospace;
+}
+
+canvas {
+  border: 2px solid #333;
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+  background: linear-gradient(180deg, #0f0f0f, #000);
+  image-rendering: pixelated;
+}
