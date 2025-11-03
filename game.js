@@ -2996,11 +2996,61 @@ function draw() {
         g.addColorStop(1,"rgba(0,100,40,0.9)");
         sc="lightgreen"; sb=12; break;
       case "miniboss":
-        g = ctx.createRadialGradient(e.x,e.y,8,e.x,e.y,e.size/1.3);
-        g.addColorStop(0,"rgba(255,50,50,1)");
-        g.addColorStop(0.5,"rgba(200,20,20,0.95)");
-        g.addColorStop(1,"rgba(80,0,0,0.9)");
-        sc="crimson"; sb=35; break;
+        // Boss-type specific gradients and effects
+        const bossColor = e.color || "#ff4444";
+        const r = parseInt(bossColor.slice(1, 3), 16);
+        const g_val = parseInt(bossColor.slice(3, 5), 16);
+        const b = parseInt(bossColor.slice(5, 7), 16);
+        
+        switch(e.bossType) {
+          case "assault":
+            g = ctx.createRadialGradient(e.x,e.y,5,e.x,e.y,e.size/1.1);
+            g.addColorStop(0,`rgba(${Math.min(255, r + 50)},${g_val},${b},1)`);
+            g.addColorStop(0.3,`rgba(${r},${g_val},${b},0.95)`);
+            g.addColorStop(1,`rgba(${Math.max(0, r - 50)},${Math.max(0, g_val - 20)},${Math.max(0, b - 20)},0.9)`);
+            sc = bossColor; sb = 40;
+            break;
+          case "sniper":
+            g = ctx.createRadialGradient(e.x,e.y,3,e.x,e.y,e.size/1.3);
+            g.addColorStop(0,"rgba(255,255,255,0.8)");
+            g.addColorStop(0.2,`rgba(${r},${g_val},${b},1)`);
+            g.addColorStop(1,`rgba(${Math.max(0, r - 30)},${Math.max(0, g_val - 30)},${Math.max(0, b - 30)},0.9)`);
+            sc = bossColor; sb = 25;
+            break;
+          case "tank":
+            g = ctx.createRadialGradient(e.x,e.y,10,e.x,e.y,e.size/1.0);
+            g.addColorStop(0,`rgba(${Math.min(255, r + 30)},${Math.min(255, g_val + 30)},${Math.min(255, b + 30)},1)`);
+            g.addColorStop(0.5,`rgba(${r},${g_val},${b},0.98)`);
+            g.addColorStop(1,`rgba(${Math.max(0, r - 40)},${Math.max(0, g_val - 40)},${Math.max(0, b - 40)},0.95)`);
+            sc = bossColor; sb = 50;
+            break;
+          case "swarm":
+            // Pulsating organic gradient
+            const pulse = Math.sin(Date.now() * 0.005) * 0.3 + 0.7;
+            g = ctx.createRadialGradient(e.x,e.y,8,e.x,e.y,e.size/1.2);
+            g.addColorStop(0,`rgba(${Math.floor(r * pulse)},${Math.floor(g_val * pulse)},${Math.floor(b * pulse)},1)`);
+            g.addColorStop(0.4,`rgba(${r},${g_val},${b},0.9)`);
+            g.addColorStop(1,`rgba(${Math.max(0, r - 60)},${Math.max(0, g_val - 20)},${Math.max(0, b - 60)},0.8)`);
+            sc = bossColor; sb = 35;
+            break;
+          case "nightmare":
+            // Chaotic shifting gradient
+            const shift = Math.sin(Date.now() * 0.01) * 50;
+            g = ctx.createRadialGradient(e.x + shift * 0.2, e.y + shift * 0.1, 6, e.x, e.y, e.size/1.1);
+            g.addColorStop(0,"rgba(200,150,255,0.9)");
+            g.addColorStop(0.3,`rgba(${r},${g_val},${b},1)`);
+            g.addColorStop(0.7,`rgba(${Math.max(0, r - 30)},${Math.max(0, g_val - 50)},${Math.max(0, b - 30)},0.95)`);
+            g.addColorStop(1,"rgba(30,0,50,0.9)");
+            sc = bossColor; sb = 45;
+            break;
+          default:
+            g = ctx.createRadialGradient(e.x,e.y,8,e.x,e.y,e.size/1.3);
+            g.addColorStop(0,"rgba(255,50,50,1)");
+            g.addColorStop(0.5,"rgba(200,20,20,0.95)");
+            g.addColorStop(1,"rgba(80,0,0,0.9)");
+            sc="crimson"; sb=35;
+        }
+        break;
       case "minion":
         g = ctx.createRadialGradient(e.x,e.y,3,e.x,e.y,e.size/1.6);
         g.addColorStop(0,"rgba(255,150,50,1)");
@@ -3017,31 +3067,181 @@ function draw() {
     
     // Miniboss health bar and effects
     if (e.type === "miniboss") {
-      // Pulsing outline
       const pulse = Math.sin(Date.now() / 200) * 0.3 + 0.7;
+      const fastPulse = Math.sin(Date.now() / 100) * 0.5 + 0.5;
       const bossColor = e.color || "#ff4444";
-      // Convert hex to rgba for pulsing effect
       const r = parseInt(bossColor.slice(1, 3), 16);
       const g = parseInt(bossColor.slice(3, 5), 16);
       const b = parseInt(bossColor.slice(5, 7), 16);
-      ctx.strokeStyle = `rgba(${r},${g},${b},${pulse})`;
-      ctx.lineWidth = 3;
-      ctx.beginPath(); 
-      ctx.arc(e.x, e.y, e.size/2 + 5, 0, Math.PI*2); 
-      ctx.stroke();
       
-      // Health bar above miniboss
-      const barWidth = 80;
-      const barHeight = 8;
+      // Boss-type specific visual effects
+      switch(e.bossType) {
+        case "assault":
+          // Aggressive spiky outline with multiple rings
+          for (let i = 0; i < 3; i++) {
+            ctx.strokeStyle = `rgba(${r},${g},${b},${pulse * (1 - i * 0.3)})`;
+            ctx.lineWidth = 4 - i;
+            ctx.beginPath();
+            // Create spiky pattern
+            const spikes = 8;
+            for (let j = 0; j <= spikes; j++) {
+              const angle = (j / spikes) * Math.PI * 2;
+              const spikeRadius = e.size/2 + 8 + i * 4 + (j % 2 === 0 ? 6 : 0);
+              const x = e.x + Math.cos(angle) * spikeRadius;
+              const y = e.y + Math.sin(angle) * spikeRadius;
+              if (j === 0) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+          }
+          break;
+          
+        case "sniper":
+          // Precise crosshair design
+          ctx.strokeStyle = `rgba(${r},${g},${b},${pulse})`;
+          ctx.lineWidth = 3;
+          // Crosshair lines
+          const crossSize = e.size/2 + 15;
+          ctx.beginPath();
+          ctx.moveTo(e.x - crossSize, e.y);
+          ctx.lineTo(e.x + crossSize, e.y);
+          ctx.moveTo(e.x, e.y - crossSize);
+          ctx.lineTo(e.x, e.y + crossSize);
+          ctx.stroke();
+          // Corner markers
+          const cornerDist = e.size/2 + 10;
+          const cornerSize = 8;
+          for (let i = 0; i < 4; i++) {
+            const angle = (i * Math.PI * 2) / 4 + Math.PI/4;
+            const cx = e.x + Math.cos(angle) * cornerDist;
+            const cy = e.y + Math.sin(angle) * cornerDist;
+            ctx.strokeRect(cx - cornerSize/2, cy - cornerSize/2, cornerSize, cornerSize);
+          }
+          break;
+          
+        case "tank":
+          // Heavy armored hexagonal design
+          ctx.strokeStyle = `rgba(${r},${g},${b},${pulse})`;
+          ctx.lineWidth = 5;
+          ctx.beginPath();
+          const hexRadius = e.size/2 + 12;
+          for (let i = 0; i <= 6; i++) {
+            const angle = (i / 6) * Math.PI * 2;
+            const x = e.x + Math.cos(angle) * hexRadius;
+            const y = e.y + Math.sin(angle) * hexRadius;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+          // Armor plates
+          ctx.lineWidth = 2;
+          for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2;
+            const innerRadius = e.size/2 + 5;
+            const outerRadius = e.size/2 + 10;
+            ctx.beginPath();
+            ctx.arc(e.x, e.y, innerRadius, angle - 0.3, angle + 0.3);
+            ctx.stroke();
+          }
+          break;
+          
+        case "swarm":
+          // Organic, flowing design with satellites
+          ctx.strokeStyle = `rgba(${r},${g},${b},${pulse})`;
+          ctx.lineWidth = 3;
+          // Main flowing outline
+          ctx.beginPath();
+          const tentacles = 6;
+          for (let i = 0; i <= tentacles * 4; i++) {
+            const angle = (i / (tentacles * 4)) * Math.PI * 2;
+            const waveOffset = Math.sin(i * 0.5 + Date.now() * 0.005) * 8;
+            const radius = e.size/2 + 8 + waveOffset;
+            const x = e.x + Math.cos(angle) * radius;
+            const y = e.y + Math.sin(angle) * radius;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.closePath();
+          ctx.stroke();
+          // Satellite orbs
+          for (let i = 0; i < 4; i++) {
+            const angle = (i / 4) * Math.PI * 2 + Date.now() * 0.002;
+            const orbRadius = e.size/2 + 25;
+            const x = e.x + Math.cos(angle) * orbRadius;
+            const y = e.y + Math.sin(angle) * orbRadius;
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          break;
+          
+        case "nightmare":
+          // Chaotic, phase-shifting design
+          ctx.strokeStyle = `rgba(${r},${g},${b},${fastPulse})`;
+          ctx.lineWidth = 4;
+          // Phase distortion effect
+          const distortions = 12;
+          ctx.beginPath();
+          for (let i = 0; i <= distortions; i++) {
+            const angle = (i / distortions) * Math.PI * 2;
+            const distortion = Math.sin(i * 1.5 + Date.now() * 0.008) * 15;
+            const radius = e.size/2 + 10 + distortion;
+            const x = e.x + Math.cos(angle) * radius;
+            const y = e.y + Math.sin(angle) * radius;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.closePath();
+          ctx.stroke();
+          // Chaotic energy sparks
+          for (let i = 0; i < 8; i++) {
+            if (Math.random() < 0.3) {
+              const angle = Math.random() * Math.PI * 2;
+              const distance = e.size/2 + 15 + Math.random() * 20;
+              const x = e.x + Math.cos(angle) * distance;
+              const y = e.y + Math.sin(angle) * distance;
+              ctx.fillStyle = `rgba(${r},${g},${b},${Math.random()})`;
+              ctx.beginPath();
+              ctx.arc(x, y, 2, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+          break;
+          
+        default:
+          // Basic pulsing outline for unknown types
+          ctx.strokeStyle = `rgba(${r},${g},${b},${pulse})`;
+          ctx.lineWidth = 3;
+          ctx.beginPath(); 
+          ctx.arc(e.x, e.y, e.size/2 + 5, 0, Math.PI*2); 
+          ctx.stroke();
+      }
+      
+      // Enhanced health bar with boss type styling
+      const barWidth = 100;
+      const barHeight = 10;
       const healthPercent = e.hp / e.maxHp;
       
-      ctx.fillStyle = "#333";
-      ctx.fillRect(e.x - barWidth/2, e.y - e.size/2 - 20, barWidth, barHeight);
-      ctx.fillStyle = e.color || "#ff4444";
-      ctx.fillRect(e.x - barWidth/2, e.y - e.size/2 - 20, barWidth * healthPercent, barHeight);
+      // Health bar background
+      ctx.fillStyle = "#222";
+      ctx.fillRect(e.x - barWidth/2, e.y - e.size/2 - 25, barWidth, barHeight);
+      
+      // Health bar fill with boss color
+      ctx.fillStyle = bossColor;
+      ctx.fillRect(e.x - barWidth/2, e.y - e.size/2 - 25, barWidth * healthPercent, barHeight);
+      
+      // Health bar border
       ctx.strokeStyle = "#fff";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(e.x - barWidth/2, e.y - e.size/2 - 20, barWidth, barHeight);
+      ctx.lineWidth = 2;
+      ctx.strokeRect(e.x - barWidth/2, e.y - e.size/2 - 25, barWidth, barHeight);
+      
+      // Boss type indicator text
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 12px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(e.bossType.toUpperCase(), e.x, e.y - e.size/2 - 35);
+      ctx.textAlign = "left";
     }
     
     ctx.restore();
